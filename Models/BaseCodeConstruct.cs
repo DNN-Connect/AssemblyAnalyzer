@@ -16,7 +16,7 @@ namespace Connect.AssemblyAnalyzer.Models
         public string GetDocumentation()
         {
             string res = "";
-            int i = 2;
+            int i = 1;
             while (i <= Decompiled.Count)
             {
                 if (Decompiled[i].Trim() == "" | Decompiled[i].Trim().StartsWith("using ") | Decompiled[i].Trim().StartsWith("namespace ") | Decompiled[i].Trim().StartsWith("{"))
@@ -37,15 +37,8 @@ namespace Connect.AssemblyAnalyzer.Models
 
         public string GetDeclaration()
         {
-
-            if (Name == "ConvertValue")
-            {
-                int j = -1;
-            }
-
             string res = "";
-            int i = 2;
-            // start at 2 as the first line is the namespace
+            int i = 1;
             while (i <= Decompiled.Count)
             {
                 if (!(Decompiled[i].Trim() == "" | Decompiled[i].Trim().StartsWith("//") | Decompiled[i].Trim().StartsWith("[") | Decompiled[i].Trim().StartsWith("using ") | Decompiled[i].Trim().StartsWith("namespace ") | Decompiled[i].Trim().StartsWith("{")))
@@ -56,7 +49,6 @@ namespace Connect.AssemblyAnalyzer.Models
                 i += 1;
             }
             return res.TrimEnd('{').Trim();
-
         }
 
 

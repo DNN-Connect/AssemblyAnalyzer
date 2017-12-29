@@ -19,6 +19,7 @@ namespace Connect.AssemblyAnalyzer.Models
                 switch (t.Name)
                 {
                     case "<Module>":
+                    case "<PrivateImplementationDetails>":
                         break;
                     default:
                         Classes.Add(t.Name, new CecilClass(assemblyReader, t));
