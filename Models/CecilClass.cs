@@ -89,7 +89,14 @@ namespace Connect.AssemblyAnalyzer.Models
                         pm.CodeBlocks.Add(cb);
                     }
                 }
-                pm.Decompiled = assemblyReader.Decompiler.DecompileAsString(p).ToDictionary();
+                try
+                {
+                    pm.Decompiled = assemblyReader.Decompiler.DecompileAsString(p).ToDictionary();
+                }
+                catch
+                {
+                    pm.Decompiled = "".ToDictionary();
+                }
                 pm.Declaration = pm.GetDeclaration();
                 pm = Common.ParseDeprecation(p, pm);
                 Properties.Add(pm);

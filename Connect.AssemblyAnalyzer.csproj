@@ -10,7 +10,8 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <OutputPath>D:\Documents\WindowsPowerShell\DNN\</OutputPath>
+    <OutputPath>D:\Documents\WindowsPowerShell\DNN\analyze\</OutputPath>
+	<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
 	<DependsOnNETStandard>true</DependsOnNETStandard>
   </PropertyGroup>
 
