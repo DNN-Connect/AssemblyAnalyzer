@@ -226,7 +226,7 @@ namespace Connect.AssemblyAnalyzer
         }
         #endregion
 
-
+        #region String Extensions
         public static string ToVersionString(this Version v)
         {
             return string.Format("{0:00}.{1:00}.{2:00}", v.Major, v.Minor, v.Build);
@@ -253,8 +253,9 @@ namespace Connect.AssemblyAnalyzer
                 res = res.Substring(res.LastIndexOf(".") + 1);
             return res;
         }
+        #endregion
 
-
+        #region IO
         public static Dictionary<int, string> ReadFile(string filePath)
         {
 
@@ -271,6 +272,15 @@ namespace Connect.AssemblyAnalyzer
             return contents;
 
         }
+        #endregion
 
+        #region Dependencies
+        public static void WriteToDoc(this AssemblyNameReference dependency, ref XmlNode doc)
+        {
+            var depNode = AddElement(ref doc, "dependency");
+            AddAttribute(ref depNode, "version", dependency.Version.ToString());
+            depNode.InnerText = dependency.FullName;
+        }
+        #endregion
     }
 }

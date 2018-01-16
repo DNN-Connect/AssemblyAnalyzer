@@ -54,12 +54,16 @@ namespace Connect.AssemblyAnalyzer
         }
         #endregion
 
-        #region Public Methods "
+        #region Public Methods
 
         public void WriteToDoc(ref XmlNode doc)
         {
             Common.AddAttribute(ref doc, "version", Assembly.Name.Version.ToVersionString());
-
+            var dependencies = Common.AddElement(ref doc, "dependencies");
+            foreach (var dep in Assembly.MainModule.AssemblyReferences)
+            {
+                dep.WriteToDoc(ref dependencies);
+            }
             foreach (string ns in Namespaces.Keys.OrderBy(k => k))
             {
                 Namespaces[ns].WriteToDoc(ref doc);
