@@ -3,6 +3,8 @@ using Mono.Cecil;
 using System.Xml;
 using System.Collections.Generic;
 using ICSharpCode.Decompiler;
+using System;
+using System.Text.RegularExpressions;
 
 namespace Connect.AssemblyAnalyzer.Models
 {
@@ -38,11 +40,13 @@ namespace Connect.AssemblyAnalyzer.Models
             {
                 BaseCodeConstruct mm = new BaseCodeConstruct();
                 mm.Name = m.Name;
+                mm.FullName = m.FullName;
                 CodeBlock cb = assemblyReader.GetMethod(m);
                 mm.CodeBlocks.Add(cb);
                 mm.Decompiled = assemblyReader.Decompiler.DecompileAsString(m).ToDictionary();
                 mm.Declaration = mm.GetDeclaration();
                 mm = Common.ParseDeprecation(m, mm);
+                mm.ParseMethodNameFromDeclaration();
                 Constructors.Add(mm);
             }
 
@@ -50,11 +54,13 @@ namespace Connect.AssemblyAnalyzer.Models
             {
                 BaseCodeConstruct mm = new BaseCodeConstruct();
                 mm.Name = m.Name;
+                mm.FullName = m.FullName;
                 CodeBlock cb = assemblyReader.GetMethod(m);
                 mm.CodeBlocks.Add(cb);
                 mm.Decompiled = assemblyReader.Decompiler.DecompileAsString(m).ToDictionary();
                 mm.Declaration = mm.GetDeclaration();
                 mm = Common.ParseDeprecation(m, mm);
+                mm.ParseMethodNameFromDeclaration();
                 Methods.Add(mm);
             }
 
@@ -62,6 +68,7 @@ namespace Connect.AssemblyAnalyzer.Models
             {
                 BaseCodeConstruct fm = new BaseCodeConstruct();
                 fm.Name = f.Name;
+                fm.FullName = f.FullName;
                 fm.Declaration = f.FullName;
                 fm.Decompiled = assemblyReader.Decompiler.DecompileAsString(f).ToDictionary();
                 fm.Declaration = fm.GetDeclaration();
@@ -73,6 +80,7 @@ namespace Connect.AssemblyAnalyzer.Models
             {
                 BaseCodeConstruct pm = new BaseCodeConstruct();
                 pm.Name = p.Name;
+                pm.FullName = p.FullName;
                 if (p.GetMethod != null)
                 {
                     CodeBlock cb = assemblyReader.GetMethod(p.GetMethod);
@@ -106,6 +114,7 @@ namespace Connect.AssemblyAnalyzer.Models
             {
                 BaseCodeConstruct em = new BaseCodeConstruct();
                 em.Name = e.Name;
+                em.FullName = e.FullName;
                 em.Decompiled = assemblyReader.Decompiler.DecompileAsString(e).ToDictionary();
                 em.Declaration = em.GetDeclaration();
                 em = Common.ParseDeprecation(e, em);
@@ -125,11 +134,32 @@ namespace Connect.AssemblyAnalyzer.Models
 
         }
 
-
         public override void WriteToDoc(ref XmlNode parent)
         {
             XmlNode newClass = Common.AddElement(ref parent, "class");
             Common.AddAttribute(ref newClass, "name", Name);
+            Common.AddAttribute(ref newClass, "IsAbstract", ThisClass.IsAbstract.ToString());
+            Common.AddAttribute(ref newClass, "IsAnsiClass", ThisClass.IsAnsiClass.ToString());
+            Common.AddAttribute(ref newClass, "IsArray", ThisClass.IsArray.ToString());
+            Common.AddAttribute(ref newClass, "IsAutoClass", ThisClass.IsAutoClass.ToString());
+            Common.AddAttribute(ref newClass, "IsAutoLayout", ThisClass.IsAutoLayout.ToString());
+            Common.AddAttribute(ref newClass, "IsBeforeFieldInit", ThisClass.IsBeforeFieldInit.ToString());
+            Common.AddAttribute(ref newClass, "IsByReference", ThisClass.IsByReference.ToString());
+            Common.AddAttribute(ref newClass, "IsClass", ThisClass.IsClass.ToString());
+            Common.AddAttribute(ref newClass, "IsDefinition", ThisClass.IsDefinition.ToString());
+            Common.AddAttribute(ref newClass, "IsEnum", ThisClass.IsEnum.ToString());
+            Common.AddAttribute(ref newClass, "IsExplicitLayout", ThisClass.IsExplicitLayout.ToString());
+            Common.AddAttribute(ref newClass, "IsFunctionPointer", ThisClass.IsFunctionPointer.ToString());
+            Common.AddAttribute(ref newClass, "IsGenericInstance", ThisClass.IsGenericInstance.ToString());
+            Common.AddAttribute(ref newClass, "IsGenericParameter", ThisClass.IsGenericParameter.ToString());
+            Common.AddAttribute(ref newClass, "IsImport", ThisClass.IsImport.ToString());
+            Common.AddAttribute(ref newClass, "IsInterface", ThisClass.IsInterface.ToString());
+            Common.AddAttribute(ref newClass, "IsNested", ThisClass.IsNested.ToString());
+            Common.AddAttribute(ref newClass, "IsNestedAssembly", ThisClass.IsNestedAssembly.ToString());
+            Common.AddAttribute(ref newClass, "IsNestedPrivate", ThisClass.IsNestedPrivate.ToString());
+            Common.AddAttribute(ref newClass, "IsNestedPublic", ThisClass.IsNestedPublic.ToString());
+            Common.AddAttribute(ref newClass, "IsNotPublic", ThisClass.IsNotPublic.ToString());
+            Common.AddElement(ref newClass, "fullName", ThisClass.FullName);
             if (IsDeprecated)
             {
                 Common.AddElement(ref newClass, "deprecation", DeprecationMessage);

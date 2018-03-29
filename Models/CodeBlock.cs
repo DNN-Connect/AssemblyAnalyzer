@@ -1,6 +1,7 @@
 ﻿using System.Xml;
 using System.Security.Cryptography;
 using System.Text;
+using System.Collections.Generic;
 
 namespace Connect.AssemblyAnalyzer.Models
 {
@@ -13,6 +14,7 @@ namespace Connect.AssemblyAnalyzer.Models
         public int EndColumn { get; set; } = 0;
         public string Body { get; set; } = "";
         public Mono.Cecil.MethodDefinition CecilMethod { get; set; } = null;
+        public List<Reference> References { get; set; } = new List<Reference>();
 
         public string Hash()
         {
@@ -32,7 +34,15 @@ namespace Connect.AssemblyAnalyzer.Models
             Common.AddAttribute(ref node, "ec", EndColumn.ToString());
             node = Common.AddElement(ref cbNode, "body", Body, true);
             Common.AddAttribute(ref node, "hash", Hash());
+            if (References.Count > 0)
+            {
+                var refs = Common.AddElement(ref cbNode, "refs");
+                foreach (var refr in References)
+                {
+                    var n = Common.AddElement(ref refs, "ref", refr.FullName, true);
+                    Common.AddAttribute(ref n, "os", refr.Offset.ToString());
+                }
+            }
         }
-
     }
 }

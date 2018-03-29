@@ -280,6 +280,7 @@ namespace Connect.AssemblyAnalyzer
             var depNode = AddElement(ref doc, "dependency");
             AddAttribute(ref depNode, "version", dependency.Version.ToString());
             AddAttribute(ref depNode, "versionnorm", dependency.Version.ToVersionString());
+            AddAttribute(ref depNode, "name", dependency.Name);
             depNode.InnerText = dependency.FullName;
         }
         #endregion

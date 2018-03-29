@@ -5,6 +5,7 @@ using System.Xml;
 using System.Collections.Generic;
 using Connect.AssemblyAnalyzer.Models;
 using ICSharpCode.Decompiler.CSharp;
+using System.Text.RegularExpressions;
 
 namespace Connect.AssemblyAnalyzer
 {
@@ -17,6 +18,9 @@ namespace Connect.AssemblyAnalyzer
         public Dictionary<string, CsFile> CodeFiles { get; set; } = new Dictionary<string, CsFile>();
         public Dictionary<string, CecilNamespace> Namespaces { get; set; } = new Dictionary<string, CecilNamespace>();
         public string BaseCodePath { get; set; } = "";
+        public int LineCount { get; set; } = 0;
+        public int CommentLineCount { get; set; } = 0;
+        public int EmptyLineCount { get; set; } = 0;
         #endregion
 
         #region Constructors
@@ -58,7 +62,13 @@ namespace Connect.AssemblyAnalyzer
 
         public void WriteToDoc(ref XmlNode doc)
         {
-            Common.AddAttribute(ref doc, "version", Assembly.Name.Version.ToVersionString());
+            var assemblyNode = Common.AddElement(ref doc, "assembly");
+            var v = Common.AddElement(ref assemblyNode, "version", Assembly.Name.Version.ToString());
+            Common.AddAttribute(ref v, "normalized", Assembly.Name.Version.ToVersionString());
+            Common.AddElement(ref assemblyNode, "fullName", Assembly.FullName);
+            Common.AddElement(ref assemblyNode, "codeLines", LineCount.ToString());
+            Common.AddElement(ref assemblyNode, "commentLines", CommentLineCount.ToString());
+            Common.AddElement(ref assemblyNode, "emptyLines", EmptyLineCount.ToString());
             var dependencies = Common.AddElement(ref doc, "dependencies");
             foreach (var dep in Assembly.MainModule.AssemblyReferences)
             {
@@ -75,7 +85,11 @@ namespace Connect.AssemblyAnalyzer
         {
             if (!CodeFiles.ContainsKey(filePath))
             {
-                CodeFiles.Add(filePath, new CsFile(BaseCodePath + filePath));
+                var newFile = new CsFile(BaseCodePath + filePath);
+                CodeFiles.Add(filePath, newFile);
+                LineCount += newFile.FileLineCount;
+                CommentLineCount += newFile.FileCommentLineCount;
+                EmptyLineCount += newFile.FileEmptyLineCount;
             }
             return CodeFiles[filePath];
         }
@@ -88,7 +102,7 @@ namespace Connect.AssemblyAnalyzer
 
             res.StartLine = int.MaxValue;
             res.EndLine = 0;
-            if (method.Body != null)
+            if (method.HasBody)
             {
                 var mdbi = method.DebugInformation;
                 foreach (Mono.Cecil.Cil.Instruction i in method.Body.Instructions)
@@ -107,7 +121,7 @@ namespace Connect.AssemblyAnalyzer
                         }
                         if (sp.EndLine > res.EndLine)
                         {
-                            if (res.FilePath != "" && GetFile(res.FilePath).NrLines >= sp.EndLine)
+                            if (res.FilePath != "" && GetFile(res.FilePath).TotalLines >= sp.EndLine)
                             {
                                 res.EndLine = sp.EndLine;
                                 res.EndColumn = sp.EndColumn;
@@ -132,8 +146,28 @@ namespace Connect.AssemblyAnalyzer
 
             res.Body = GetCode(csFile, res.StartLine, res.StartColumn, res.EndLine, res.EndColumn);
 
+            res.References = GetReferences(method);
+
             return res;
 
+        }
+
+        public List<Reference> GetReferences(MethodDefinition method)
+        {
+            var res = new List<Reference>();
+            if (method.HasBody)
+            {
+                foreach (var call in method.Body.Instructions.Where(il => il.OpCode == Mono.Cecil.Cil.OpCodes.Call))
+                {
+                    var m = call.Operand as MethodReference;
+                    res.Add(new Reference()
+                    {
+                        Offset = call.Offset,
+                        FullName = m.FullName
+                    });
+                }
+            }
+            return res;
         }
 
         public string GetCode(CsFile csFile, int startLine, int startColumn, int endLine, int endColumn)

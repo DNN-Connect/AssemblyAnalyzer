@@ -12,6 +12,7 @@ namespace Connect.AssemblyAnalyzer.Models
         public string DeprecationMessage { get; set; } = "";
         public Dictionary<int, string> Decompiled { get; set; } = new Dictionary<int, string>();
         public string Name { get; set; } = "";
+        public string FullName { get; set; } = "";
 
         public string GetDocumentation()
         {
@@ -51,7 +52,6 @@ namespace Connect.AssemblyAnalyzer.Models
             return res.TrimEnd('{').Trim();
         }
 
-
         public void ParseTypeNameFromDeclaration(string defaultName)
         {
             Name = Declaration.Trim();
@@ -68,9 +68,22 @@ namespace Connect.AssemblyAnalyzer.Models
             }
         }
 
+        public void ParseMethodNameFromDeclaration()
+        {
+            // for methods we might have overloads so the name must use the full method incl parameters
+            var newName = Declaration.Trim();
+            newName = newName.TrimEnd(';');
+            Match m = Regex.Match(newName, "[^\\s]+\\(.*\\)");
+            if (m.Success)
+            {
+                Name = m.Value;
+            }
+        }
+
         public virtual void WriteToDoc(ref XmlNode parent)
         {
-            Common.AddAttribute(ref parent,"name", Name);
+            Common.AddAttribute(ref parent, "name", Name);
+            Common.AddElement(ref parent, "fullName", FullName, true);
             if (IsDeprecated)
             {
                 Common.AddElement(ref parent, "deprecation", DeprecationMessage);
@@ -89,7 +102,10 @@ namespace Connect.AssemblyAnalyzer.Models
             }
             foreach (CodeBlock cb in CodeBlocks)
             {
-                cb.WriteToDoc(ref parent);
+                if (cb.Body.Trim().Length > 0)
+                {
+                    cb.WriteToDoc(ref parent);
+                }
             }
         }
 

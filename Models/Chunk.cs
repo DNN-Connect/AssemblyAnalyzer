@@ -77,7 +77,7 @@ namespace Connect.AssemblyAnalyzer.Models
 
             int lineNr = lineList.First().Key;
             int lastLineNr = lineList.Last().Key;
-            int startLine = 0;
+            //int startLine = 0;
             int level = 0;
             Dictionary<int, string> nextChunkLines = null;
             StringBuilder leadIn = new StringBuilder();
