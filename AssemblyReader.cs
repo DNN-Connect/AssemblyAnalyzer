@@ -44,17 +44,15 @@ namespace Connect.AssemblyAnalyzer
 
             foreach (TypeDefinition t in Assembly.MainModule.Types)
             {
-                if (!Namespaces.ContainsKey(t.Namespace))
+                if (!Namespaces.ContainsKey(t.Namespace) && t.Namespace != "")
                 {
-                    //If Not Namespaces.ContainsKey(t.Namespace) AndAlso t.Namespace.StartsWith("DotNetNuke") Then
                     CecilNamespace cns = new CecilNamespace(this, t.Namespace);
                     if (cns.Classes.Count > 0)
                     {
-                        Namespaces.Add(t.Namespace, new CecilNamespace(this, t.Namespace));
+                        Namespaces.Add(t.Namespace, cns);
                     }
                 }
             }
-
         }
         #endregion
 

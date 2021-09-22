@@ -3,8 +3,6 @@ using Mono.Cecil;
 using System.Xml;
 using System.Collections.Generic;
 using ICSharpCode.Decompiler;
-using System;
-using System.Text.RegularExpressions;
 
 namespace Connect.AssemblyAnalyzer.Models
 {
@@ -127,7 +125,7 @@ namespace Connect.AssemblyAnalyzer.Models
             IsDeprecated = a.IsDeprecated;
             DeprecationMessage = a.DeprecationMessage;
 
-            foreach (TypeDefinition t in cClass.NestedTypes.Where(t1 => !t1.Name.Contains("__")))
+            foreach (TypeDefinition t in cClass.NestedTypes.Where(t1 => !t1.Name.Contains("__") && !t1.Name.StartsWith("<")))
             {
                 SubTypes.Add(new CecilClass(assemblyReader, t));
             }
@@ -200,6 +198,11 @@ namespace Connect.AssemblyAnalyzer.Models
             {
                 XmlNode node = Common.AddElement(ref nextGroup, "event");
                 bcc.WriteToDoc(ref node);
+            }
+
+            foreach (CecilClass subType in SubTypes)
+            {
+                subType.WriteToDoc(ref newClass);
             }
 
         }

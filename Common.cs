@@ -284,5 +284,18 @@ namespace Connect.AssemblyAnalyzer
             depNode.InnerText = dependency.FullName;
         }
         #endregion
+
+        #region DebugStuff
+        public static void WriteToLog(params string[] messages)
+        {
+            using (var tw = new System.IO.StreamWriter("D:\\Temp\\log.txt", true))
+            {
+                foreach(var message in messages)
+                {
+                    tw.WriteLine(message);
+                }
+            }
+        }
+        #endregion
     }
 }
