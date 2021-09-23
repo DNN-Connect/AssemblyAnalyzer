@@ -22,6 +22,9 @@ namespace Connect.AssemblyAnalyzer
         [ValidateNotNullOrEmpty]
         public string OutPath { get; set; }
 
+        [Parameter(Position = 3, Mandatory = false, HelpMessage = "Last foldername before code during build")]
+        public string ProjectCodePathIdentifier { get; set; } = "";
+
         protected override void ProcessRecord()
         {
 
@@ -52,7 +55,7 @@ namespace Connect.AssemblyAnalyzer
 
             //try
             //{
-            AssemblyReader assem = new AssemblyReader(Assembly, CodePath);
+            AssemblyReader assem = new AssemblyReader(Assembly, CodePath, ProjectCodePathIdentifier);
             assem.WriteToDoc(ref root);
             TimeSpan timeTaken = DateTime.Now.Subtract(startTime);
             Common.AddAttribute(ref root, "generated", startTime.ToString("u"));

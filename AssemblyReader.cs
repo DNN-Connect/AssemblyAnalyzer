@@ -5,32 +5,28 @@ using System.Xml;
 using System.Collections.Generic;
 using Connect.AssemblyAnalyzer.Models;
 using ICSharpCode.Decompiler.CSharp;
-using System.Text.RegularExpressions;
 
 namespace Connect.AssemblyAnalyzer
 {
     public class AssemblyReader
     {
 
-        #region Properties
         public AssemblyDefinition Assembly { get; set; } = null;
         public CSharpDecompiler Decompiler { get; set; } = null;
         public Dictionary<string, CsFile> CodeFiles { get; set; } = new Dictionary<string, CsFile>();
         public Dictionary<string, CecilNamespace> Namespaces { get; set; } = new Dictionary<string, CecilNamespace>();
         public string BaseCodePath { get; set; } = "";
+        public string ProjectCodePathIdentifier { get; set; } = "";
         public int LineCount { get; set; } = 0;
         public int CommentLineCount { get; set; } = 0;
         public int EmptyLineCount { get; set; } = 0;
-        #endregion
 
-        #region Constructors
 
-        public AssemblyReader(string assemblyPath, string codePath)
+        public AssemblyReader(string assemblyPath, string codePath, string projectCodePathIdentifier)
         {
-            BaseCodePath = codePath;
-            if (!BaseCodePath.EndsWith("\\"))
-                BaseCodePath += "\\";
-            LoadCsFiles(codePath);
+            BaseCodePath = codePath.EnsureEndsWith(@"\");
+            LoadCsFiles(BaseCodePath);
+            ProjectCodePathIdentifier = projectCodePathIdentifier.EnsureEndsWith(@"\");
 
             DefaultAssemblyResolver resolver = new DefaultAssemblyResolver();
             resolver.AddSearchDirectory(Path.GetDirectoryName(assemblyPath));
@@ -54,9 +50,7 @@ namespace Connect.AssemblyAnalyzer
                 }
             }
         }
-        #endregion
 
-        #region Public Methods
 
         public void WriteToDoc(ref XmlNode doc)
         {
@@ -114,7 +108,7 @@ namespace Connect.AssemblyAnalyzer
                             res.StartColumn = sp.StartColumn;
                             if (!string.IsNullOrEmpty(sp.Document.Url))
                             {
-                                res.FilePath = sp.Document.Url.Substring(BaseCodePath.Length);
+                                res.FilePath = sp.Document.Url.ToFullSourcePath(this.ProjectCodePathIdentifier, this.BaseCodePath);
                             }
                         }
                         if (sp.EndLine > res.EndLine)
@@ -221,9 +215,7 @@ namespace Connect.AssemblyAnalyzer
             }
             return res;
         }
-        #endregion
 
-        #region Private Methods
         private void LoadCsFiles(string path)
         {
             foreach (string csf in Directory.GetFiles(path, "*.cs"))
@@ -238,7 +230,5 @@ namespace Connect.AssemblyAnalyzer
                 }
             }
         }
-        #endregion
-
     }
 }
