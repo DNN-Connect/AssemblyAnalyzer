@@ -21,6 +21,7 @@
 
   <ItemGroup>
     <PackageReference Include="ICSharpCode.Decompiler" Version="3.0.0.3447" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     <PackageReference Include="PowerShellStandard.Library" Version="3.0.0-preview-01" />
   </ItemGroup>
   

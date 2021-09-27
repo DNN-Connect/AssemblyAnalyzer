@@ -5,6 +5,7 @@ using System.Xml;
 using System.Collections.Generic;
 using Connect.AssemblyAnalyzer.Models;
 using ICSharpCode.Decompiler.CSharp;
+using Newtonsoft.Json;
 
 namespace Connect.AssemblyAnalyzer
 {
@@ -16,17 +17,40 @@ namespace Connect.AssemblyAnalyzer
         public Dictionary<string, CsFile> CodeFiles { get; set; } = new Dictionary<string, CsFile>();
         public Dictionary<string, CecilNamespace> Namespaces { get; set; } = new Dictionary<string, CecilNamespace>();
         public string BaseCodePath { get; set; } = "";
-        public string ProjectCodePathIdentifier { get; set; } = "";
         public int LineCount { get; set; } = 0;
         public int CommentLineCount { get; set; } = 0;
         public int EmptyLineCount { get; set; } = 0;
+        public int BasePathIndex { get; set; } = -1;
+        private List<string> TopCodeFolders { get; set; } = new List<string>();
 
-
-        public AssemblyReader(string assemblyPath, string codePath, string projectCodePathIdentifier)
+        public AssemblyReader(string assemblyPath, string codePath)
         {
             BaseCodePath = codePath.EnsureEndsWith(@"\");
-            LoadCsFiles(BaseCodePath);
-            ProjectCodePathIdentifier = projectCodePathIdentifier.EnsureEndsWith(@"\");
+            var codeFile = $"{BaseCodePath}allcode.json";
+            if (File.Exists(codeFile))
+            {
+                using (var sr = new StreamReader(codeFile))
+                {
+                    this.CodeFiles = JsonConvert.DeserializeObject<Dictionary<string, CsFile>>(sr.ReadToEnd());
+                }
+            }
+            else
+            {
+                LoadCsFiles(BaseCodePath);
+                using (var sw = new StreamWriter(codeFile))
+                {
+                    sw.WriteLine(JsonConvert.SerializeObject(this.CodeFiles, new JsonSerializerSettings()
+                    {
+                        ReferenceLoopHandling = ReferenceLoopHandling.Ignore
+                    }));
+                }
+            }
+
+            // Get the top level folders so we can properly map the build code paths to the source
+            foreach (var d in new DirectoryInfo(BaseCodePath).GetDirectories())
+            {
+                TopCodeFolders.Add(d.Name);
+            }
 
             DefaultAssemblyResolver resolver = new DefaultAssemblyResolver();
             resolver.AddSearchDirectory(Path.GetDirectoryName(assemblyPath));
@@ -75,15 +99,15 @@ namespace Connect.AssemblyAnalyzer
 
         public CsFile GetFile(string filePath)
         {
-            if (!CodeFiles.ContainsKey(filePath))
+            if (!CodeFiles.ContainsKey(filePath.ToLowerInvariant()))
             {
-                var newFile = new CsFile(BaseCodePath + filePath);
-                CodeFiles.Add(filePath, newFile);
+                var newFile = new CsFile(filePath);
+                CodeFiles.Add(filePath.ToLowerInvariant(), newFile);
                 LineCount += newFile.FileLineCount;
                 CommentLineCount += newFile.FileCommentLineCount;
                 EmptyLineCount += newFile.FileEmptyLineCount;
             }
-            return CodeFiles[filePath];
+            return CodeFiles[filePath.ToLowerInvariant()];
         }
 
         public CodeBlock GetMethod(MethodDefinition method)
@@ -108,7 +132,23 @@ namespace Connect.AssemblyAnalyzer
                             res.StartColumn = sp.StartColumn;
                             if (!string.IsNullOrEmpty(sp.Document.Url))
                             {
-                                res.FilePath = sp.Document.Url.ToFullSourcePath(this.ProjectCodePathIdentifier, this.BaseCodePath);
+                                if (this.BasePathIndex == -1)
+                                {
+                                    var hit = 0;
+                                    foreach (var seg in sp.Document.Url.Split('\\'))
+                                    {
+                                        if (TopCodeFolders.Contains(seg))
+                                        {
+                                            this.BasePathIndex = hit;
+                                            break;
+                                        }
+                                        else
+                                        {
+                                            hit = hit + seg.Length + 1;
+                                        }
+                                    }
+                                }
+                                res.FilePath = BaseCodePath + sp.Document.Url.Substring(this.BasePathIndex);
                             }
                         }
                         if (sp.EndLine > res.EndLine)
@@ -130,11 +170,11 @@ namespace Connect.AssemblyAnalyzer
             if (res.FilePath == null || res.FilePath == "")
                 return res;
 
-            if (!CodeFiles.ContainsKey(res.FilePath))
+            if (!CodeFiles.ContainsKey(res.FilePath.ToLowerInvariant()))
             {
-                CodeFiles.Add(res.FilePath, new CsFile(BaseCodePath + res.FilePath));
+                CodeFiles.Add(res.FilePath.ToLowerInvariant(), new CsFile(BaseCodePath + res.FilePath));
             }
-            CsFile csFile = CodeFiles[res.FilePath];
+            CsFile csFile = CodeFiles[res.FilePath.ToLowerInvariant()];
 
             res.Body = GetCode(csFile, res.StartLine, res.StartColumn, res.EndLine, res.EndColumn);
 
@@ -220,7 +260,7 @@ namespace Connect.AssemblyAnalyzer
         {
             foreach (string csf in Directory.GetFiles(path, "*.cs"))
             {
-                CodeFiles.Add(csf, new CsFile(csf));
+                CodeFiles.Add(csf.ToLowerInvariant(), new CsFile(csf));
             }
             foreach (string d in Directory.GetDirectories(path))
             {

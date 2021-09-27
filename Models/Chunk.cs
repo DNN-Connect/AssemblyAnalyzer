@@ -26,7 +26,9 @@ namespace Connect.AssemblyAnalyzer.Models
         public string Documentation { get; set; } = "";
         public Chunk Parent { get; set; } = null;
 
-
+        public Chunk()
+        {
+        }
         public Chunk(Chunk parent, Dictionary<int, string> lineList, string precedingText, string ns, string parentClass)
         {
             this.Parent = parent;

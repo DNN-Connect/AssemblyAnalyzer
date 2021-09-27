@@ -25,6 +25,9 @@ namespace Connect.AssemblyAnalyzer.Models
             get { return _fileName; }
         }
 
+        public CsFile()
+        {
+        }
         public CsFile(string path)
         {
             _fileName = path;
