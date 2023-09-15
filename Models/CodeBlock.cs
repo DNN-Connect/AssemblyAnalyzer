@@ -8,6 +8,7 @@ namespace Connect.AssemblyAnalyzer.Models
     public class CodeBlock
     {
         public string FilePath { get; set; } = "";
+        public string Url { get; set; } = "";
         public int StartLine { get; set; } = -1;
         public int StartColumn { get; set; } = 0;
         public int EndLine { get; set; } = -1;
@@ -27,7 +28,7 @@ namespace Connect.AssemblyAnalyzer.Models
         public virtual void WriteToDoc(ref XmlNode parent)
         {
             XmlNode cbNode = Common.AddElement(ref parent, "codeblock");
-            var node = Common.AddElement(ref cbNode, "location", FilePath);
+            var node = Common.AddElement(ref cbNode, "location", Url);
             Common.AddAttribute(ref node, "sl", StartLine.ToString());
             Common.AddAttribute(ref node, "sc", StartColumn.ToString());
             Common.AddAttribute(ref node, "el", EndLine.ToString());
